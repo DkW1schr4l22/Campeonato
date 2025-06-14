@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect("C:/Users/comer/OneDrive/Área de Trabalho/Faculdade/Prog/sqlite-tools-win-x64-3490100/campeonato.db")
+conn = sqlite3.connect("C:/Users/comer/OneDrive/Área de Trabalho/Faculdade/Prog/sqlite-tools-win-x64-3490100/campeonato_final_dupla.db")
 cursor = conn.cursor()
 
 def menu():
@@ -43,10 +43,9 @@ def clubes():
 def submenu():
     print("Submenu:")
     print("0. Voltar")
-    print("1. Listar Gols")
-    print("2. Visualizar informações do clube")
-    print("3. Listar jogadores")
-    print("4. Listar jogos")
+    print("1. Visualizar informações do clube")
+    print("2. Listar jogadores")
+    print("3. Listar jogos")
     opcao = input("Escolha uma opção: ")
     return opcao
 
@@ -61,9 +60,8 @@ while opcao != "0":
         
         while submenu_opcao != "0":
             if submenu_opcao == "1":
-                listar_gols(id_clube)
-            elif submenu_opcao == "2":
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT 
                         c.nome AS clube, 
                         e.nome AS estadio, 
@@ -90,11 +88,39 @@ while opcao != "0":
                 else:
                     print("Nenhuma informação encontrada.")
 
+            elif submenu_opcao == "2":
+                cursor.execute("""SELECT 
+                        j.nome AS jogador, 
+                        j.posicao AS posição 
+                    FROM Clubes c
+                    INNER JOIN Jogadores j ON j.id_clube = ?
+                    GROUP BY j.nome, j.posicao
+                """, (id_clube,))
+                jogadores = cursor.fetchall()
+                print("Lista de Jogadores:")
+                for jogador in jogadores:
+                    print(f"Nome: {jogador[0]}, Posição: {jogador[1]}")
+                print("Jogadores listados com sucesso!")
+
             elif submenu_opcao == "3":
-                gol_id = int(input("Digite o ID do gol a ser removido: "))
-                cursor.execute("DELETE FROM Gols WHERE id = ?", (gol_id,))
-                conn.commit()
-                print("Gol removido com sucesso!")
+                cursor.execute("""
+                    SELECT 
+                        clube_casa.nome AS clube_casa,
+                        p.gols_mandante,
+                        p.gols_visitante,
+                        clube_visitante.nome AS clube_visitante,
+                        p.data,
+                        e.nome AS estadio
+                    FROM Gols g
+                    INNER JOIN Jogadores autor ON g.id_jogador = autor.id_jogador
+                    LEFT JOIN Jogadores assistente ON g.id_jogador_assistencia = assistente.id_jogador
+                    WHERE autor.id_clube = ?
+                """, (id_clube,))
+                jogadores = cursor.fetchall()
+                print("Lista de Jogadores:")
+                for jogador in jogadores:
+                    print(f"Nome: {jogador[0]}, Posição: {jogador[1]}")
+                print("Jogadores listados com sucesso!")
             else:
                 print("Opção inválida. Tente novamente.")
             
